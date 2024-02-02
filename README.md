@@ -1,1 +1,0 @@
-ITU DevOps course Spring 2024
