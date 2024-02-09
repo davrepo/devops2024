@@ -58,16 +58,59 @@ func init_DB() error {
 	return nil
 }
 
-func query_DB(query string) {
+// query database and return result as a list of maps
+func query_DB(db *sql.DB, query string, args ...interface{}) ([]map[string]interface{}, error) {
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []map[string]interface{}
+	for rows.Next() {
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return nil, err
+		}
+
+		rowMap := make(map[string]interface{})
+		for i, col := range columns {
+			rowMap[col] = values[i]
+		}
+		result = append(result, rowMap)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
-// def query_db(query, args=(), one=False):
-//     """Queries the database and returns a list of dictionaries."""
-//     cur = g.db.execute(query, args)
-//     rv = [dict((cur.description[idx][0], value)
-//                for idx, value in enumerate(row)) for row in cur.fetchall()]
-//     return (rv[0] if rv else None) if one else rv
+// Get user ID for a given username
+func get_user_id(db *sql.DB, username string) (int, error) {
+	var userID int
+	err := db.QueryRow("SELECT user_id FROM user WHERE username = ?", username).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// User not found
+			return 0, nil
+		}
+		// Other error
+		return 0, err
+	}
+	return userID, nil
+}
 
 func main() {
 	r := mux.NewRouter()
