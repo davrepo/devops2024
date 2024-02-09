@@ -1,15 +1,19 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"database/sql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
@@ -28,10 +32,10 @@ const (
 // Database connection
 func connect_db() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", Database)
-	if err != nil {
-		log.Fatal(err)
+	if db == nil {
+		log.Fatal("Database connection failed to open")
 	}
-	return db, nil
+	return db, err
 }
 
 // Initialize database
@@ -113,6 +117,12 @@ func get_user_id(db *sql.DB, username string) (int, error) {
 }
 
 func main() {
+	// Init database
+	err := init_DB()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	r := mux.NewRouter()
 	// Define routes
 	r.HandleFunc("/", timelineHandler).Methods("GET")
@@ -125,11 +135,26 @@ func main() {
 	r.HandleFunc("/register", registerHandler).Methods("GET", "POST")
 	r.HandleFunc("/logout", logoutHandler).Methods("GET")
 
-	// Middleware to open and defer closing database connection
+	// Middleware to open and defer closing database connection - remember to add it
 	r.Use(dbMiddleware)
 
 	// Start server
 	log.Fatal(http.ListenAndServe(":8080", r))
+}
+
+func formatDatetime(timestamp int64) string {
+	//Format a timestamp for display.
+	t := time.Unix(timestamp, 0).UTC()
+	return t.Format("2006-01-02 @ 15:04")
+}
+
+func gravatarURL(email string, size int) string {
+	//Return the gravatar image for the given email address.
+	size = 80
+	email = strings.ToLower(strings.TrimSpace(email))
+	hash := md5.Sum([]byte(email))
+	hashStr := hex.EncodeToString(hash[:])
+	return fmt.Sprintf("http://www.gravatar.com/avatar/%s?d=identicon&s=%d", hashStr, size)
 }
 
 func timelineHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +173,23 @@ func userTimelineHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO
 	vars := mux.Vars(r)
 	username := vars["username"]
-	profile_user := query_DB("select * from user where username = ?")
+	db, err := connect_db()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	profile_user, err := query_DB(db, "select * from user where username = ?", username)
+	if profile_user == nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	followed := false
+	if profile_user != nil {
+		followed = query_db('''select 1 from follower where
+		follower.who_id = ? and follower.whom_id = ?''',
+		[session['user_id'], profile_user['user_id']], one=True) is not None
+	}
 
 }
 
@@ -188,11 +229,19 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	session, err := store.Get(r, "")
 	if err != nil {
-		//...
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	session.Values["user_id"] = nil
-	//err handlle
+	session.Values["flash"] = "You were logged out"
+
+	delete(session.Values, "user_id")
+	if err = session.Save(r, w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to the public_timeline page.
+	http.Redirect(w, r, "/public_timeline", http.StatusFound)
 
 }
