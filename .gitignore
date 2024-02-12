@@ -1,0 +1,26 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Database
+*.db
+db/
+.DS_Store
+# Vagrant
+.vagrant
+
+# VS Code Remote Containers
+.devcontainer
+
+# minitwit secrets
+.minitwit-secrets.env
+
