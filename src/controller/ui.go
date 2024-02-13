@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	// rename packe for easier read
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func Timeline(c *gin.Context) {
@@ -14,7 +14,7 @@ func Timeline(c *gin.Context) {
 	if user == "" {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title": "Timeline",
-			// "endpoint": "public_timeline",
+			// "endpoint": "/public",
 			"messages": GetMessages("", page),
 		})
 	} else {
@@ -60,7 +60,7 @@ func UserTimeline(c *gin.Context) {
 	} else {
 		user, err := c.Cookie("token")
 		if err != nil {
-			c.Redirect(http.StatusTemporaryRedirect, "/public_timeline")
+			c.Redirect(http.StatusTemporaryRedirect, "/public")
 		}
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title":     "My Timeline",

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"os"
 	"time"
 
@@ -41,7 +42,9 @@ func GetUserID(username string) uint {
 }
 
 func main() {
-	err := godotenv.Load(".minitwit-secrets.env")
+	if err := godotenv.Load(".minitwit-secrets.env"); err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
 	router := gin.Default()
 	router.SetFuncMap(template.FuncMap{
@@ -52,24 +55,39 @@ func main() {
 	router.Static("/web/static", "./src/web/static")
 
 	database.SetupDB()
+
+	/*
+		/ Shows a user's timeline or redirects to /public if no user is logged in.
+		   This timeline displays the user's messages as well as all the messages of followed users.
+		/public: Displays the latest messages of all users.
+		/<username>: Displays a user's tweets.
+		/<username>/follow: Adds the current user as a follower of the given user.
+		/<username>/unfollow: Removes the current user as a follower of the given user.
+		/add_message: POST endpoint to register a new message for the user.
+		/login: GET and POST endpoints to log the user in.
+		/register: GET and POST endpoints to register a new user.
+		/logout: Logs the user out.
+	*/
+
 	router.GET("/", controller.Timeline)
 	router.GET("/version", (func(c *gin.Context) {
 		c.Data(200, "application/json; charset=utf-8", []byte(os.Getenv("VERSION")))
 	}))
-	router.GET("/public_timeline", controller.Timeline)
-	router.GET("/user_timeline", controller.UserTimeline)
+	router.GET("/public", controller.Timeline)
+	router.GET("/:username", controller.UserTimeline)
+
 	router.GET("/register", controller.Register)
 	router.POST("/register", controller.SignUp)
 	router.GET("/login", controller.LoginPage)
 	router.POST("/login", controller.Login)
 	router.GET("/logout", controller.Logout)
-	router.GET("/follow", controller.Follow)
-	router.GET("/unfollow", controller.Unfollow)
+	router.GET("/:username/follow", controller.Follow)
+	router.GET("/:username/unfollow", controller.Unfollow)
 	router.POST("/add_message", controller.AddMessage)
 
 	getGinMetrics(router)
 
-	err = router.Run(":80")
+	err := router.Run(":8080")
 	if err != nil {
 		panic(err)
 	}
