@@ -3,7 +3,14 @@
 ## NB!
 Make sure you have a `.env` file in the root folder
 
-## Docker
+## Run On Local Machine
+```
+make postgresinit
+make createdb
+make run
+```
+
+## Docker (NOT WORKING)
 Start service:
 ```
 docker-compose build
