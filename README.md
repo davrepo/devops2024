@@ -26,3 +26,6 @@ Stop service and remove container:
 ```
 docker-compose down --volumes
 ```
+
+### Why Docker is not working?
+Seems like the `docker-compose` is not able to connect to the database.
