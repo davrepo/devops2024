@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/penglongli/gin-metrics/ginmetrics"
-
-	model "github.com/ahmedaabouzied/minitwit/src/models"
+	controller "minitwit.com/devops/src/controller"
+	database "minitwit.com/devops/src/database"
+	model "minitwit.com/devops/src/models"
 )
 
 func getGinMetrics(router *gin.Engine) {
@@ -34,4 +38,39 @@ func GetUserID(username string) uint {
 	var user model.User
 	database.DB.Where("username = ?", username).First(&user) // SELECT * FROM USERS WHERE USERNAME = "?"
 	return user.ID
+}
+
+func main() {
+	err := godotenv.Load(".minitwit-secrets.env")
+
+	router := gin.Default()
+	router.SetFuncMap(template.FuncMap{
+		"formatAsDate": formatAsDate,
+		"getUserId":    GetUserID,
+	})
+	router.LoadHTMLGlob("src/web/templates/*.tpl")
+	router.Static("/web/static", "./src/web/static")
+
+	database.SetupDB()
+	router.GET("/", controller.Timeline)
+	router.GET("/version", (func(c *gin.Context) {
+		c.Data(200, "application/json; charset=utf-8", []byte(os.Getenv("VERSION")))
+	}))
+	router.GET("/public_timeline", controller.Timeline)
+	router.GET("/user_timeline", controller.UserTimeline)
+	router.GET("/register", controller.Register)
+	router.POST("/register", controller.SignUp)
+	router.GET("/login", controller.LoginPage)
+	router.POST("/login", controller.Login)
+	router.GET("/logout", controller.Logout)
+	router.GET("/follow", controller.Follow)
+	router.GET("/unfollow", controller.Unfollow)
+	router.POST("/add_message", controller.AddMessage)
+
+	getGinMetrics(router)
+
+	err = router.Run(":80")
+	if err != nil {
+		panic(err)
+	}
 }

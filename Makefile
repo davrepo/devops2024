@@ -1,8 +1,24 @@
-init:
-	python -c"from minitwit import init_db; init_db()"
+postgresinit:
+	docker run --name postgres15 -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=password -d postgres:15-alpine
 
-build:
-	gcc flag_tool.c -lsqlite3 -o flag_tool
+postgres:
+	docker exec -it postgres15 psql
 
-clean:
-	rm flag_tool
+createdb:
+	docker exec -it postgres15 createdb --username=root --owner=root minitwit
+
+dropdb:
+	docker exec -it postgres15 dropdb minitwit
+
+migrateup:
+	migrate -path src/database/migrations -database "postgresql://root:password@localhost:5433/minitwit?sslmode=disable" -verbose up
+
+migratedown:
+	migrate -path src/database/migrations -database "postgresql://root:password@localhost:5433/minitwit?sslmode=disable" -verbose down
+
+run:
+	go run src/web/main.go .
+	go run api/api.go .
+
+
+.PHONY: postgresinit postgres createdb dropdb migrateup migratedown
