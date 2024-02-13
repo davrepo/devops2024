@@ -6,11 +6,8 @@ services:
       - "8080:8080"
     depends_on:
       - db
-    environment:
-      DB_HOST: db
-      DB_USER: root
-      DB_PASSWORD: password
-      DB_NAME: minitwit
+    env_file:
+      - .env
 
   db:
     image: postgres:16-alpine

@@ -18,7 +18,5 @@ migratedown:
 
 run:
 	go run src/web/main.go .
-	go run api/api.go .
-
 
 .PHONY: postgresinit postgres createdb dropdb migrateup migratedown

@@ -21,6 +21,6 @@ db/
 # VS Code Remote Containers
 .devcontainer
 
-# minitwit secrets
-.minitwit-secrets.env
+# environment variables
+.env
 

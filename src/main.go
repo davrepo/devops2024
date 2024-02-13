@@ -37,12 +37,12 @@ func formatAsDate(t time.Time) string {
 
 func GetUserID(username string) uint {
 	var user model.User
-	database.DB.Where("username = ?", username).First(&user) // SELECT * FROM USERS WHERE USERNAME = "?"
+	database.DB.Where("username = ?", username).First(&user)
 	return user.ID
 }
 
 func main() {
-	if err := godotenv.Load(".minitwit-secrets.env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Error loading .env file")
 	}
 
