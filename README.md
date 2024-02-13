@@ -1,4 +1,4 @@
-ITU DevOps course, Spring 2024
+# ITU DevOps course, Spring 2024
 
 ## NB!
 Make sure you have a `.env` file in the root folder
