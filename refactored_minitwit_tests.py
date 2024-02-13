@@ -12,7 +12,7 @@
 import requests
 
 
-# import schema
+# import schema schema.sql
 # import data
 # otherwise use the database that you got previously
 BASE_URL = "http://localhost:8080"
@@ -133,4 +133,3 @@ def test_timelines():
     r = http_session.get(f'{BASE_URL}/')
     assert 'the message by foo' not in r.text
     assert 'the message by bar' in r.text
-

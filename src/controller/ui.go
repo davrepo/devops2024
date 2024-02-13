@@ -14,7 +14,7 @@ func Timeline(c *gin.Context) {
 	if user == "" {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title": "Timeline",
-			// "endpoint": "/public",
+			// "endpoint": "/public_timeline",
 			"messages": GetMessages("", page),
 		})
 	} else {
@@ -60,7 +60,7 @@ func UserTimeline(c *gin.Context) {
 	} else {
 		user, err := c.Cookie("token")
 		if err != nil {
-			c.Redirect(http.StatusTemporaryRedirect, "/public")
+			c.Redirect(http.StatusTemporaryRedirect, "/public_timeline")
 		}
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title":     "My Timeline",

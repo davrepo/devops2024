@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	database "github.com/ITU-DevOps-N/go-minitwit/src/database"
-	model "github.com/ITU-DevOps-N/go-minitwit/src/models"
+	database "minitwit.com/devops/src/database"
+	model "minitwit.com/devops/src/models"
 )
 
 func Follow(c *gin.Context) {

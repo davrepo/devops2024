@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -23,24 +22,25 @@ func PasswordCompare(salt string, password string, hashedPassword string) error 
 	return err
 }
 
-func ValidUser(username string, password string) bool {
+func ValidUser(username string, password string) (bool, string) {
 
 	user := GetUser(username)
 
 	if user.Username == "" {
-		return false
+		return false, "Invalid username"
 	}
 
 	err := PasswordCompare(user.Salt, password, user.Password)
+	if err != nil {
+		return false, "Invalid password"
+	}
 
-	return err == nil
+	return true, ""
 }
 
 func Login(c *gin.Context) {
-	c.Request.ParseForm()
-
-	username := strings.ToLower(c.Request.PostForm.Get("username"))
-	password := c.Request.PostForm.Get("password")
+	username := strings.ToLower(c.Request.FormValue("username"))
+	password := c.Request.FormValue("password")
 
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
 		c.HTML(http.StatusOK, "login.tpl", gin.H{
@@ -48,25 +48,20 @@ func Login(c *gin.Context) {
 			"ErrorMessage": "Please fill in all fields",
 		})
 	}
-	user := GetUser(username)
-	if ValidUser(username, password) {
-		// token := generateSessionToken()
-		// session := sessions.Default(c)
-		// session.Set("id", user.ID)
-		// session.Set("email", user.Email)
-		// session.Save()
-		c.SetCookie("token", user.Username, 3600, "", "", false, true)
 
+	valid, errMsg := ValidUser(username, password)
+	if valid {
+		c.SetCookie("token", username, 3600, "", "", false, true)
+		c.Redirect(http.StatusFound, "/user_timeline")
 	} else {
+		// Send back the specific error message (errMsg) in the response.
 		c.HTML(http.StatusOK, "login.tpl", gin.H{
-			"ErrorTitle":   "Login failed.",
-			"ErrorMessage": "Invalid credentials provided.",
+			"ErrorTitle":   "Login Failed",
+			"ErrorMessage": errMsg,
 		})
 	}
-
-	location := url.URL{Path: "/user_timeline"}
-	c.Redirect(http.StatusFound, location.RequestURI())
 }
+
 func LoginPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.tpl", gin.H{
 		"title": "Login",

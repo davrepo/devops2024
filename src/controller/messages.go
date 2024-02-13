@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,15 +37,35 @@ func LimitMessages(page string) (int, int) {
 }
 
 func AddMessage(c *gin.Context) {
-	user, _ := c.Cookie("token")
-	if user == "" {
+	user, err := c.Cookie("token")
+	if err != nil || user == "" {
 		c.Redirect(http.StatusTemporaryRedirect, "/")
 	}
-	message := c.Request.FormValue("message")
-	t := time.Now().Format(time.RFC1123)
-	time_now, _ := time.Parse(time.RFC1123, t)
-	database.DB.Create(&model.Message{Author: user, Text: message, CreatedAt: time_now})
-	c.Redirect(http.StatusFound, "/user_timeline")
+
+	// Check if the user exists
+	var count int64
+	database.DB.Model(&model.User{}).Where("username = ?", user).Count(&count)
+	if count == 0 {
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+	}
+
+	// Check if the message is not empty
+	message := c.PostForm("message")
+	if strings.TrimSpace(message) == "" {
+		c.Redirect(http.StatusFound, "/user_timeline")
+		return
+	}
+
+	// Create and save the message
+	t := time.Now()
+	database.DB.Create(&model.Message{
+		Author:    user,
+		Text:      message,
+		CreatedAt: t,
+	})
+
+	// Redirect to user timeline with a success message
+	c.Redirect(http.StatusFound, "/user_timeline?message=success")
 }
 
 func GetFollower(follower uint, following uint) bool {

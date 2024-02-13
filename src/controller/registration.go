@@ -41,9 +41,15 @@ func ValidRegistration(c *gin.Context, username string, email string, password1 
 		})
 		return false
 	}
-	if username == "" || email == "" || password1 == "" {
+	if username == "" {
 		c.HTML(http.StatusOK, "register.tpl", gin.H{
-			"error": "All fields are required.",
+			"error": "Username is required.",
+		})
+		return false
+	}
+	if password1 == "" {
+		c.HTML(http.StatusOK, "register.tpl", gin.H{
+			"error": "You have to enter a password",
 		})
 		return false
 	}
@@ -70,9 +76,20 @@ func SignUp(c *gin.Context) {
 	password1 := c.Request.PostForm.Get("password1")
 	password2 := c.Request.PostForm.Get("password2")
 
-	if ValidRegistration(c, username, email, password1, password2) {
-		CreateUser(username, email, password1)
-		location := url.URL{Path: "/login"}
-		c.Redirect(http.StatusFound, location.RequestURI())
+	if !ValidRegistration(c, username, email, password1, password2) {
+		return
 	}
+
+	var user model.User
+	result := database.DB.Where("username = ?", strings.ToLower(username)).First(&user)
+	if result.RowsAffected > 0 {
+		c.HTML(http.StatusOK, "register.tpl", gin.H{
+			"error": "Username is already taken.",
+		})
+		return
+	}
+
+	CreateUser(username, email, password1)
+	location := url.URL{Path: "/login"}
+	c.Redirect(http.StatusFound, location.RequestURI())
 }
