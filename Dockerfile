@@ -1,20 +1,24 @@
-FROM golang:1.22.0
-
-# Set the working directory to /app
+FROM golang:1.18 as builder
 WORKDIR /app
-
-# Copy go.mod and go.sum files to the working directory
-COPY go.mod .
-COPY go.sum .
-
-# Download dependencies
+COPY go.mod go.sum ./
 RUN go mod download
-
-# Copy the rest of the application code
 COPY . .
 
-# Build the Go application
-RUN go build -o minitwit.go
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o minitwit ./src/main.go
+RUN chmod +x minitwit
 
-# Specify the command to run your application
+# Use a Docker multi-stage build to create a small final image
+FROM alpine:latest  
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/minitwit .
+
+# Expose the port the app runs on
+EXPOSE 8080
+
+# Command to run the executable
 CMD ["./minitwit"]
