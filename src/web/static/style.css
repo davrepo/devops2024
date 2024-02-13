@@ -1,11 +1,11 @@
 body {
-    background: #cccaec;
+    background: #CAECE9;
     font-family: 'Trebuchet MS', sans-serif;
     font-size: 14px;
 }
 
 a {
-    color: #335474;
+    color: #26776F;
 }
 
 a:hover {
@@ -38,13 +38,13 @@ input[type="submit"] {
 
 div.page {
     background: white;
-    border: 1px solid #335474;
+    border: 1px solid #6ECCC4;
     width: 700px;
     margin: 30px auto;
 }
 
 div.page h1 {
-    background: #335474;
+    background: #6ECCC4;
     margin: 0;
     padding: 10px 14px;
     color: white;

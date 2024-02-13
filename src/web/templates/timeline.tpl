@@ -8,11 +8,11 @@
   {{ if .user }}
     <a href="/user_timeline">my timeline</a> |
     <a href="/public_timeline">public timeline</a> |
-    <a href="/logout">logout</a>
+    <a href="/logout">sign out {{ .user }} </a>
   {{ else }}
     <a href="/public_timeline">public timeline</a> |
     <a href="/register">sign up</a> |
-    <a href="/login">login</a>
+    <a href="/login">sign in</a>
   {{ end }}
   </div>
   <div class=body>
@@ -52,6 +52,6 @@
   </ul>
   </div>
   <div class=footer>
-    MiniTwit &mdash; A Gin Application
+    MiniTwit &mdash; A Go Gin Application
   </div>
 </div>
