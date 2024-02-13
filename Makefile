@@ -1,14 +1,14 @@
 postgresinit:
-	docker run --name postgres15 -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=password -d postgres:15-alpine
+	docker run --name postgres16 -p 5433:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=password -d postgres:15-alpine
 
 postgres:
-	docker exec -it postgres15 psql
+	docker exec -it postgres16 psql
 
 createdb:
-	docker exec -it postgres15 createdb --username=root --owner=root minitwit
+	docker exec -it postgres16 createdb --username=root --owner=root minitwit
 
 dropdb:
-	docker exec -it postgres15 dropdb minitwit
+	docker exec -it postgres16 dropdb minitwit
 
 migrateup:
 	migrate -path src/database/migrations -database "postgresql://root:password@localhost:5433/minitwit?sslmode=disable" -verbose up
