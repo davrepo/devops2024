@@ -4,11 +4,11 @@
 Make sure you have a `.env` file in the root folder, and that it contains the following fields:
 ```
 # PostgreSQL database configuration
-DB_HOST=
-DB_PORT=
-DB_DATABASE=
-DB_USER=
-DB_PASS=
+DB_HOST=localhost
+DB_PORT=5433
+DB_DATABASE=minitwit
+DB_USER=root
+DB_PASS=password
 ```
 
 ## Run On Local Machine
