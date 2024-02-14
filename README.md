@@ -1,6 +1,6 @@
 # ITU DevOps course, Spring 2024
 
-## NB!
+## Run On Local Machine
 Make sure you have a `.env` file in the root folder, and that it contains the following fields:
 ```
 # PostgreSQL database configuration
@@ -10,15 +10,23 @@ DB_DATABASE=minitwit
 DB_USER=root
 DB_PASS=password
 ```
-
-## Run On Local Machine
+Then run the following commands:
 ```
 make postgresinit
 make createdb
 make run
 ```
 
-## Docker (NOT WORKING)
+## Docker
+Make sure you have a `.env` file in the root folder, and that it contains the following fields:
+```
+# PostgreSQL database configuration
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=minitwit
+DB_USER=root
+DB_PASS=password
+```
 Start service:
 ```
 docker-compose build
