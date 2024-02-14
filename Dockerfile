@@ -30,6 +30,7 @@ COPY --from=builder /app/minitwit .
 # Copy other necessary files
 COPY --from=builder /app/.env .
 COPY --from=builder /app/src/web/templates ./src/web/templates
+COPY --from=builder /app/src/web/static ./src/web/static
 
 # Expose the port the app runs on
 EXPOSE 8080
