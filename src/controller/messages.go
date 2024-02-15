@@ -19,9 +19,13 @@ func GetMessages(user string, page string) []map[string]interface{} {
 	offset, messagesPerPage := LimitMessages(page)
 
 	if user == "" {
-		database.DB.Table("messages").Limit(messagesPerPage).Order("created_at desc").Offset(offset).Find(&results)
+		database.DB.Table("messages").Select("messages.*, users.*").Joins("JOIN users ON messages.author_id = users.user_id").
+			Where("messages.flagged = ?", 0).Order("messages.created_at desc").
+			Offset(offset).Limit(messagesPerPage).Find(&results)
 	} else {
-		database.DB.Table("messages").Where("author = ?", user).Limit(messagesPerPage).Order("created_at desc").Offset(offset).Find(&results)
+		database.DB.Table("messages").Select("messages.*, users.*").Joins("JOIN users ON messages.author_id = users.user_id").
+			Where("(users.user_id = ? OR users.user_id IN (SELECT whom_id FROM followers WHERE who_id = ?)) AND messages.flagged = ?", user, user, 0).
+			Order("messages.created_at desc").Offset(offset).Limit(messagesPerPage).Find(&results)
 	}
 	return results
 }
