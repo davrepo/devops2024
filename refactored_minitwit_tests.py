@@ -25,7 +25,7 @@ def register(username, password, password2=None, email=None):
         email = username + '@example.com'
     return requests.post(f'{BASE_URL}/register', data={
         'username':     username,
-        'password':     password,
+        'password1':     password,
         'password2':    password2,
         'email':        email,
     }, allow_redirects=True)
@@ -50,7 +50,7 @@ def logout(http_session):
 
 def add_message(http_session, text):
     """Records a message"""
-    r = http_session.post(f'{BASE_URL}/add_message', data={'text': text},
+    r = http_session.post(f'{BASE_URL}/add_message', data={'message': text},
                                 allow_redirects=True)
     if text:
         assert 'Your message was recorded' in r.text

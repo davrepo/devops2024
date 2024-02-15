@@ -11,7 +11,7 @@ RUN chmod +x minitwit
 # Start of the final stage
 FROM alpine:latest as final
 
-# Install ca-certificates and netcat for the wait-for-it script
+# Install ca-certificates and netcat
 RUN apk --no-cache add ca-certificates netcat-openbsd tzdata && \
   cp /usr/share/zoneinfo/UTC /etc/localtime && \
   echo "UTC" > /etc/timezone && \
@@ -35,5 +35,4 @@ COPY --from=builder /app/src/web/static ./src/web/static
 # Expose the port the app runs on
 EXPOSE 8080
 
-# Modify the CMD to run the script before starting your application
 CMD ["./minitwit"]
