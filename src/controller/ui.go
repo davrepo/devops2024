@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+	"minitwit.com/devops/src/flash"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,8 +31,13 @@ func Timeline(c *gin.Context) {
 
 func UserTimeline(c *gin.Context) {
 	user_query := c.Request.URL.Query().Get("username")
-
-	page := c.DefaultQuery("page", "0")
+	data := make(map[string]interface{})
+	data["messages"] = flash.GetFlash(c, "message")
+	fmt.Println(data)
+	fmt.Println(flash.GetFlash(c, "message"), flash.GetFlash(c, "error"))
+	res := make(map[string]interface{})
+	res["errors"] = flash.GetFlash(c, "error")
+	//page := c.DefaultQuery("page", "0")
 
 	if user_query != "" {
 		user, err := c.Cookie("token")
@@ -47,14 +54,14 @@ func UserTimeline(c *gin.Context) {
 				"user":          user_query,
 				"followed":      followed,
 				"user_page":     user_page,
-				"messages":      GetMessages(user_query, page),
+				"messages":      data,
 			})
 		} else {
 			c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 				"title":         user_query + "'s Timeline",
 				"user_timeline": true,
 				"private":       true,
-				"messages":      GetMessages(user_query, page),
+				"messages":      data,
 			})
 		}
 	} else {
@@ -67,7 +74,7 @@ func UserTimeline(c *gin.Context) {
 			"user":      user,
 			"private":   true,
 			"user_page": true,
-			"messages":  GetMessages(user, page),
+			"messages":  data,
 		})
 	}
 }

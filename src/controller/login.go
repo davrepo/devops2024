@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"minitwit.com/devops/src/flash"
 	"net/http"
 	"strings"
 
@@ -51,6 +52,7 @@ func Login(c *gin.Context) {
 
 	valid, errMsg := ValidUser(username, password)
 	if valid {
+		flash.SetFlash(c, "message", "You were logged in")
 		c.SetCookie("token", username, 3600, "", "", false, true)
 		c.Redirect(http.StatusFound, "/user_timeline")
 	} else {

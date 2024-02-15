@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	database "minitwit.com/devops/src/database"
+	flash "minitwit.com/devops/src/flash"
 	model "minitwit.com/devops/src/models"
 )
 
@@ -63,7 +64,7 @@ func AddMessage(c *gin.Context) {
 		Text:      message,
 		CreatedAt: t,
 	})
-
+	flash.SetFlash(c, "message", "Your message was recorded")
 	// Redirect to user timeline with a success message
 	c.Redirect(http.StatusFound, "/user_timeline?message=success")
 }
