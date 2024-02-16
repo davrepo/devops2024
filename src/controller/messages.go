@@ -28,6 +28,7 @@ func GetMessages(user string, page string, c *gin.Context) []map[string]interfac
 	} else {
 		database.DB.Table("messages").Where("author = ?", user).Limit(messagesPerPage).Order("created_at desc").Offset(offset).Find(&results)
 	}
+	//here
 	return results
 }
 
