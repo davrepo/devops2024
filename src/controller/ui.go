@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	flash "minitwit.com/devops/src/flash"
 )
 
 func Timeline(c *gin.Context) {
@@ -11,25 +12,31 @@ func Timeline(c *gin.Context) {
 
 	page := c.DefaultQuery("page", "0")
 
+	data := make(map[string]interface{})
+	data["flashes"] = flash.GetFlash(c, "message")
+
 	if user == "" {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title": "Timeline",
 			// "endpoint": "/public_timeline",
-			"messages": GetMessages("", page),
+			"flashes":  data,
+			"messages": GetMessages("", page, c),
 		})
 	} else {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title":         "Timeline",
 			"user":          user,
 			"user_timeline": false,
-			"messages":      GetMessages("", page),
+			"flashes":       data,
+			"messages":      GetMessages("", page, c),
 		})
 	}
 }
 
 func UserTimeline(c *gin.Context) {
 	user_query := c.Request.URL.Query().Get("username")
-
+	data := make(map[string]interface{})
+	data["flashes"] = flash.GetFlash(c, "message")
 	page := c.DefaultQuery("page", "0")
 
 	if user_query != "" {
@@ -47,14 +54,16 @@ func UserTimeline(c *gin.Context) {
 				"user":          user_query,
 				"followed":      followed,
 				"user_page":     user_page,
-				"messages":      GetMessages(user_query, page),
+				"flashes":       data,
+				"messages":      GetMessages(user_query, page, c),
 			})
 		} else {
 			c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 				"title":         user_query + "'s Timeline",
 				"user_timeline": true,
 				"private":       true,
-				"messages":      GetMessages(user_query, page),
+				"flashes":       data,
+				"messages":      GetMessages(user_query, page, c),
 			})
 		}
 	} else {
@@ -67,7 +76,8 @@ func UserTimeline(c *gin.Context) {
 			"user":      user,
 			"private":   true,
 			"user_page": true,
-			"messages":  GetMessages(user, page),
+			"flashes":   data,
+			"messages":  GetMessages(user, page, c),
 		})
 	}
 }

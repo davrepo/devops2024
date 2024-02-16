@@ -51,7 +51,11 @@ def logout(http_session):
 def add_message(http_session, text):
     """Records a message"""
     r = http_session.post(f'{BASE_URL}/add_message', data={'message': text},
+<<<<<<< HEAD
                                 allow_redirects=True)
+=======
+                                    allow_redirects=True)
+>>>>>>> feature/flash_messages
     if text:
         assert 'Your message was recorded' in r.text
     return r
@@ -101,35 +105,36 @@ def test_timelines():
     logout(http_session)
     _, http_session = register_and_login('bar', 'default')
     add_message(http_session, 'the message by bar')
-    r = http_session.get(f'{BASE_URL}/public')
+    r = http_session.get(f'{BASE_URL}/public_timeline')
     assert 'the message by foo' in r.text
     assert 'the message by bar' in r.text
 
     # bar's timeline should just show bar's message
-    r = http_session.get(f'{BASE_URL}/')
+    r = http_session.get(f'{BASE_URL}/user_timeline')
     assert 'the message by foo' not in r.text
     assert 'the message by bar' in r.text
 
     # now let's follow foo
-    r = http_session.get(f'{BASE_URL}/foo/follow', allow_redirects=True)
-    assert 'You are now following &#34;foo&#34;' in r.text
+    r = http_session.get(f'{BASE_URL}/follow?username=foo', allow_redirects=True)
+    print(r.text)
+    assert 'You are now following foo' in r.text
 
     # we should now see foo's message
-    r = http_session.get(f'{BASE_URL}/')
+    r = http_session.get(f'{BASE_URL}/user_timeline')
     assert 'the message by foo' in r.text
     assert 'the message by bar' in r.text
 
     # but on the user's page we only want the user's message
-    r = http_session.get(f'{BASE_URL}/bar')
+    r = http_session.get(f'{BASE_URL}/user_timeline?username=bar')
     assert 'the message by foo' not in r.text
     assert 'the message by bar' in r.text
-    r = http_session.get(f'{BASE_URL}/foo')
+    r = http_session.get(f'{BASE_URL}/user_timeline?username=foo')
     assert 'the message by foo' in r.text
     assert 'the message by bar' not in r.text
 
     # now unfollow and check if that worked
-    r = http_session.get(f'{BASE_URL}/foo/unfollow', allow_redirects=True)
-    assert 'You are no longer following &#34;foo&#34;' in r.text
-    r = http_session.get(f'{BASE_URL}/')
+    r = http_session.get(f'{BASE_URL}/unfollow?username=foo', allow_redirects=True)
+    assert 'You are no longer following foo' in r.text
+    r = http_session.get(f'{BASE_URL}/user_timeline')
     assert 'the message by foo' not in r.text
     assert 'the message by bar' in r.text
