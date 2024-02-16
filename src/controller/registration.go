@@ -11,6 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	database "minitwit.com/devops/src/database"
 	model "minitwit.com/devops/src/models"
+	flash "minitwit.com/devops/src/flash"
 )
 
 func CreateUser(username string, email string, password string) {
@@ -37,13 +38,13 @@ func ValidEmail(email string) bool {
 func ValidRegistration(c *gin.Context, username string, email string, password1 string, password2 string) bool {
 	if password1 != password2 {
 		c.HTML(http.StatusOK, "register.tpl", gin.H{
-			"error": "Passwords do not match.",
+			"error": "The two passwords do not match",
 		})
 		return false
 	}
 	if username == "" {
 		c.HTML(http.StatusOK, "register.tpl", gin.H{
-			"error": "Username is required.",
+			"error": "You have to enter a username",
 		})
 		return false
 	}
@@ -55,7 +56,7 @@ func ValidRegistration(c *gin.Context, username string, email string, password1 
 	}
 	if !ValidEmail(email) {
 		c.HTML(http.StatusOK, "register.tpl", gin.H{
-			"error": "Email is not valid.",
+			"error": "You have to enter a valid email address",
 		})
 		return false
 	}
@@ -84,12 +85,18 @@ func SignUp(c *gin.Context) {
 	result := database.DB.Where("username = ?", strings.ToLower(username)).First(&user)
 	if result.RowsAffected > 0 {
 		c.HTML(http.StatusOK, "register.tpl", gin.H{
-			"error": "Username is already taken.",
+			"error": "The username is already taken",
 		})
 		return
 	}
 
 	CreateUser(username, email, password1)
 	location := url.URL{Path: "/login"}
+	flash.SetFlash(c,"message","You were successfully registered and can login now")
+	data := make(map[string]interface{})
+	data["flashes"] = flash.GetFlash(c, "message")
+	c.HTML(http.StatusOK, "register.tpl", gin.H{
+		"flashes": data,
+	})
 	c.Redirect(http.StatusFound, location.RequestURI())
 }

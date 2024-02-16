@@ -1,11 +1,10 @@
 package controllers
 
 import (
-	"fmt"
-	"minitwit.com/devops/src/flash"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	flash "minitwit.com/devops/src/flash"
 )
 
 func Timeline(c *gin.Context) {
@@ -13,18 +12,23 @@ func Timeline(c *gin.Context) {
 
 	page := c.DefaultQuery("page", "0")
 
+	data := make(map[string]interface{})
+	data["flashes"] = flash.GetFlash(c, "message")
+
 	if user == "" {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title": "Timeline",
 			// "endpoint": "/public_timeline",
-			"messages": GetMessages("", page),
+			"flashes": data,
+			"messages": GetMessages("", page, c),
 		})
 	} else {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title":         "Timeline",
 			"user":          user,
 			"user_timeline": false,
-			"messages":      GetMessages("", page),
+			"flashes": 		 data,
+			"messages":      GetMessages("", page, c),
 		})
 	}
 }
@@ -32,12 +36,8 @@ func Timeline(c *gin.Context) {
 func UserTimeline(c *gin.Context) {
 	user_query := c.Request.URL.Query().Get("username")
 	data := make(map[string]interface{})
-	data["messages"] = flash.GetFlash(c, "message")
-	fmt.Println(data)
-	fmt.Println(flash.GetFlash(c, "message"), flash.GetFlash(c, "error"))
-	res := make(map[string]interface{})
-	res["errors"] = flash.GetFlash(c, "error")
-	//page := c.DefaultQuery("page", "0")
+	data["flashes"] = flash.GetFlash(c, "message")
+	page := c.DefaultQuery("page", "0")
 
 	if user_query != "" {
 		user, err := c.Cookie("token")
@@ -54,14 +54,16 @@ func UserTimeline(c *gin.Context) {
 				"user":          user_query,
 				"followed":      followed,
 				"user_page":     user_page,
-				"messages":      data,
+				"flashes": 		 data,
+				"messages":      GetMessages(user_query, page, c),
 			})
 		} else {
 			c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 				"title":         user_query + "'s Timeline",
 				"user_timeline": true,
 				"private":       true,
-				"messages":      data,
+				"flashes": 		 data,
+				"messages":      GetMessages(user_query, page, c),
 			})
 		}
 	} else {
@@ -74,7 +76,8 @@ func UserTimeline(c *gin.Context) {
 			"user":      user,
 			"private":   true,
 			"user_page": true,
-			"messages":  data,
+			"flashes":   data,
+			"messages":  GetMessages(user, page, c),
 		})
 	}
 }

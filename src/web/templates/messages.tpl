@@ -1,4 +1,4 @@
-{{ define "messages" }}
+{{ define "flashes" }}
   {{ if index . "errors" }}
     <div class="errors" style="background: darksalmon; padding: 10px;">
         {{ range index . "errors" }}
@@ -6,9 +6,9 @@
         {{ end }}
     </div>
   {{ end }}
-  {{ if index . "messages" }}
+  {{ if index . "flashes" }}
     <ul class="flashes">
-        {{ range index . "messages" }}
+        {{ range index . "flashes" }}
         <li>{{ . }}
         {{ end }}
     </ul>

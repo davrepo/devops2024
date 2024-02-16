@@ -1,5 +1,5 @@
 <!doctype html>
-{{ template "messages" . }}
+{{ template "flashes" . }}
 <title> {{.title}} | MiniTwit</title>
 <link rel=stylesheet type=text/css href="/web/static/style.css">
 <div class=page>

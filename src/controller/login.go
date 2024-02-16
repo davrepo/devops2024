@@ -71,6 +71,7 @@ func LoginPage(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
+	flash.SetFlash(c,"message","You were logged out")
 	c.SetCookie("token", "", -1, "", "", false, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
