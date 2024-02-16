@@ -19,7 +19,7 @@ func Timeline(c *gin.Context) {
 		c.HTML(http.StatusOK, "timeline.tpl", gin.H{
 			"title": "Timeline",
 			// "endpoint": "/public_timeline",
-			"flashes": data,
+			"flashes":  data,
 			"messages": GetMessages("", page, c),
 		})
 	} else {
@@ -27,7 +27,7 @@ func Timeline(c *gin.Context) {
 			"title":         "Timeline",
 			"user":          user,
 			"user_timeline": false,
-			"flashes": 		 data,
+			"flashes":       data,
 			"messages":      GetMessages("", page, c),
 		})
 	}
@@ -54,7 +54,7 @@ func UserTimeline(c *gin.Context) {
 				"user":          user_query,
 				"followed":      followed,
 				"user_page":     user_page,
-				"flashes": 		 data,
+				"flashes":       data,
 				"messages":      GetMessages(user_query, page, c),
 			})
 		} else {
@@ -62,7 +62,7 @@ func UserTimeline(c *gin.Context) {
 				"title":         user_query + "'s Timeline",
 				"user_timeline": true,
 				"private":       true,
-				"flashes": 		 data,
+				"flashes":       data,
 				"messages":      GetMessages(user_query, page, c),
 			})
 		}
