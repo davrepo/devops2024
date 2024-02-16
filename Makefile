@@ -17,8 +17,6 @@ migratedown:
 	migrate -path src/database/migrations -database "postgresql://root:password@localhost:5433/minitwit?sslmode=disable" -verbose down
 
 run:
-	go run src/web/main.go .
-	go run api/api.go .
-
+	go run src/main.go .
 
 .PHONY: postgresinit postgres createdb dropdb migrateup migratedown
