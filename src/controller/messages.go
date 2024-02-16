@@ -37,9 +37,9 @@ func GetMessages(user string, page string, c *gin.Context) []map[string]interfac
 			Where("(username = ? OR id IN (SELECT following FROM follows WHERE follower = ?)) AND messages.flagged = ?", user, userID, false).
 			Order("messages.created_at desc").Offset(offset).Limit(messagesPerPage).Find(&results)
 	}
+	//here
 	return results
 }
-
 
 func LimitMessages(page string) (int, int) {
 	messagesPerPage := 50
