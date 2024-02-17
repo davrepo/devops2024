@@ -207,7 +207,7 @@ func AddMessage(user string, message string) {
 	message = sanitize(message)
 	t := time.Now().Format(time.RFC822)
 	time_now, _ := time.Parse(time.RFC822, t)
-	DB.Create(&model.Message{Author: user, Text: message, CreatedAt: time_now})
+	DB.Create(&model.Message{User: user, Content: message, CreatedAt: time_now})
 }
 
 func Latest(c *gin.Context) {
@@ -268,9 +268,9 @@ func main() {
 			data = GetMessages(user, no)
 		}
 		if len(data) == 0 {
-			c.JSON(204, gin.H{})
+      c.Status(http.StatusNoContent)
 		} else {
-			c.JSON(http.StatusOK, gin.H{"data": data})
+			c.JSON(http.StatusOK, data)
 		}
 	}))
 	router.POST("/msgs/:usr", (func(c *gin.Context) {
