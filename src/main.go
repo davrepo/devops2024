@@ -46,6 +46,8 @@ func main() {
 		log.Fatalf("Error loading .env file")
 	}
 
+	database.SetupDB()
+
 	router := gin.Default()
 	router.SetFuncMap(template.FuncMap{
 		"formatAsDate": formatAsDate,
@@ -53,8 +55,6 @@ func main() {
 	})
 	router.LoadHTMLGlob("src/web/templates/*.tpl")
 	router.Static("/web/static", "./src/web/static")
-
-	database.SetupDB()
 
 	router.GET("/", controller.Timeline)
 	router.GET("/version", (func(c *gin.Context) {
