@@ -12,9 +12,9 @@ type User struct {
 
 type Message struct {
 	MessageID uint      `json:"messageID" gorm:"primaryKey"`
-	User      string    `json:"User" gorm:"foreignKey:Username;"`
-	Content   string    `json:"content"`
-	CreatedAt time.Time `json:"createdAt"`
+	Author    string    `json:"authorID" gorm:"foreignKey:Username;"`
+	Text      string    `json:"text"`
+  CreatedAt time.Time `json:"createdAt"`
 	Flagged   bool      `json:"flagged"`
 }
 

@@ -27,6 +27,10 @@ type APIMessage struct {
 	Content   string `json:"content"`
 }
 
+type FollowerListStruct struct {
+  Follows []string `json:"follows"`  
+}
+
 var DB *gorm.DB
 var LATEST = 0
 
@@ -178,17 +182,21 @@ func GetMessages(user string, no int) []APIMessage {
     return apiMessages
 }
 
-func GetFollowers(user string) []string {
-	var fllws []model.Follow
-	var usr model.User
-	followers := []string{}
+func GetFollowers(user uint) []string {
+    var usernames []string
+    err := DB.Model(&model.User{}).
+      Select("users.username").
+      Joins("JOIN follows ON follows.following = users.id").
+      Where("follows.follower = ?", user).
+      Pluck("users.username", &usernames).Error
 
-	DB.Table("follows").Where("following = ?", GetUser(user).ID).Find(&fllws)
-	for i := range fllws {
-		DB.Where("ID = ?", fllws[i].Follower).First(&usr)
-		followers = append(followers, usr.Username)
-	}
-	return followers
+    if err != nil {
+      log.Printf("Error finding followers: %v", err)
+      return nil
+    }
+
+    
+    return usernames
 }
 
 func GetFollower(follower uint, following uint) bool {
@@ -201,8 +209,9 @@ func GetFollower(follower uint, following uint) bool {
 	}
 }
 
-func Follow(user string, to_follow string) *gorm.DB {
-	err := DB.Create(&model.Follow{Follower: GetUser(user).ID, Following: GetUser(to_follow).ID})
+func Follow(followerID uint, followeeID uint) *gorm.DB {
+  follow := model.Follow{Follower: followerID, Following: followeeID}
+  err := DB.Create(&follow)
 	return err
 }
 
@@ -322,40 +331,43 @@ func main() {
 
 	router.GET("/fllws/:usr", (func(c *gin.Context) {
 		Latest(c)
-		user := strings.Trim(c.Param("usr"), "/")
-		if GetUser(user).ID == 0 {
+    user := GetUser(strings.Trim(c.Param("usr"), "/"))
+		if user.ID == 0 {
 			c.JSON(404, gin.H{"error": "user not found"})
 			return
 		} else {
-			c.JSON(http.StatusOK, gin.H{"data": GetFollowers(user)})
+      followerList := GetFollowers(user.ID)
+      followerListResponse := FollowerListStruct{Follows: followerList}
+			c.JSON(http.StatusOK, followerListResponse)
 			return
 		}
 	}))
 
 	router.POST("/fllws/:usr", (func(c *gin.Context) {
 		Latest(c)
-		user := strings.Trim(c.Param("usr"), "/")
-
-		if GetUser(user).ID == 0 {
+    user := GetUser(strings.Trim(c.Param("usr"), "/"))
+		if user.ID == 0 {
 			c.JSON(404, gin.H{"error": "user not found"})
 			return
 		}
 
 		var follow model.FollowForm
 		if err := c.ShouldBindJSON(&follow); err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+  
 		if follow.Follow != "" {
-			err := Follow(user, follow.Follow)
-			if err != nil {
-				c.JSON(403, gin.H{"error": ""})
+      followee := GetUser(follow.Follow)
+			err := Follow(user.ID, followee.ID)
+			if err.Error != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": ""})
 				return
 			}
-			c.JSON(http.StatusNoContent, gin.H{})
+			c.JSON(http.StatusCreated, gin.H{})
 			return
 		} else if follow.Unfollow != "" {
-			err := Unfollow(user, follow.Unfollow)
+			err := Unfollow(user.Username, follow.Unfollow)
 			if err != nil {
 				c.JSON(403, gin.H{"error": ""})
 				return
@@ -369,7 +381,7 @@ func main() {
 				return
 			}
 			LATEST = latest
-			c.JSON(http.StatusOK, gin.H{"data": GetFollowers(user)})
+			c.JSON(http.StatusOK, gin.H{"data": GetFollowers(user.ID)})
 		} else {
 			c.JSON(403, gin.H{"error_msg": "Only these fields are accepted: follow | unfollow | latest"})
 			return
