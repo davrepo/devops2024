@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+  // "encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -17,6 +18,14 @@ import (
 	"gorm.io/gorm"
 	model "minitwit.com/devops/src/models"
 )
+
+type APIMessage struct {
+	User      string `json:"user"`
+	CreatedAt string `json:"created_at"`
+	Flagged   bool   `json:"flagged"`
+	MessageID int    `json:"message_id"`
+	Content   string `json:"content"`
+}
 
 var DB *gorm.DB
 var LATEST = 0
@@ -85,6 +94,22 @@ func ValidRegistration(c *gin.Context, username string, email string, password1 
 	return true
 }
 
+func ConvertToAPIMessage(messages []model.Message) []APIMessage {
+  var apiMessages []APIMessage
+
+  for _, msg := range messages {
+    apiMessage := APIMessage {
+			User:      msg.Author,
+			CreatedAt: msg.CreatedAt.Format(time.RFC3339),
+			Flagged:   msg.Flagged,
+			MessageID: int(msg.MessageID),
+			Content:   msg.Text,
+    }
+    apiMessages = append(apiMessages, apiMessage)
+  }
+  return apiMessages
+}
+
 func SignUp(c *gin.Context) {
 	//If directories are unreferenced then they should be removed from the web root and/or the application directory.
 	// reponse: HTTP/1.1 301 Moved Permanently
@@ -140,17 +165,17 @@ func GetUser(username string) model.User {
 	return user
 }
 
-func GetMessages(user string, no int) []map[string]interface{} {
-	var messages []model.Message
+func GetMessages(user string, no int) []APIMessage {
+    var messages []model.Message
 
-	DB.Find(&messages)
-	var results []map[string]interface{}
-	if user == "" {
-		DB.Table("messages").Order("created_at desc").Limit(no).Find(&results)
-	} else {
-		DB.Table("messages").Order("created_at desc").Where("author = ?", user).Limit(no).Find(&results)
-	}
-	return results
+    query := DB.Table("messages").Order("created_at desc").Limit(no)
+    if user != "" {
+        query = query.Where("author = ?", user)
+    }
+    query.Find(&messages)
+
+    apiMessages := ConvertToAPIMessage(messages)
+    return apiMessages
 }
 
 func GetFollowers(user string) []string {
@@ -207,7 +232,7 @@ func AddMessage(user string, message string) {
 	message = sanitize(message)
 	t := time.Now().Format(time.RFC822)
 	time_now, _ := time.Parse(time.RFC822, t)
-	DB.Create(&model.Message{User: user, Content: message, CreatedAt: time_now})
+	DB.Create(&model.Message{Author: user, Text: message, CreatedAt: time_now})
 }
 
 func Latest(c *gin.Context) {
@@ -261,7 +286,7 @@ func main() {
 		if err != nil {
 			no = 100
 		}
-		var data []map[string]interface{}
+    var data []APIMessage
 		if user == "" {
 			data = GetMessages("", no)
 		} else {
