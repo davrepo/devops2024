@@ -73,7 +73,7 @@ func main() {
 
 	getGinMetrics(router)
 
-	err := router.Run(":80")
+	err := router.Run(":8080")
 	if err != nil {
 		panic(err)
 	}
