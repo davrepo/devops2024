@@ -215,9 +215,8 @@ func Follow(followerID uint, followeeID uint) *gorm.DB {
 	return err
 }
 
-func Unfollow(user string, to_unfollow string) *gorm.DB {
-	var follows []model.Follow
-	err := DB.Where("follower = ?", GetUser(user).ID).Where("following = ?", GetUser(to_unfollow).ID).Delete(&follows)
+func Unfollow(follower uint, followee uint) *gorm.DB {
+  err := DB.Delete(&model.Follow{}, model.Follow{Follower: follower, Following: followee})
 	return err
 }
 
@@ -367,12 +366,13 @@ func main() {
 			c.JSON(http.StatusCreated, gin.H{})
 			return
 		} else if follow.Unfollow != "" {
-			err := Unfollow(user.Username, follow.Unfollow)
-			if err != nil {
+      unfollowee := GetUser(follow.Unfollow)
+			err := Unfollow(user.ID, unfollowee.ID)
+			if err.Error != nil {
 				c.JSON(403, gin.H{"error": ""})
 				return
 			}
-			c.JSON(http.StatusNoContent, gin.H{})
+      c.Status(http.StatusNoContent)
 			return
 		} else if len(follow.Latest) > 0 {
 			latest, err := strconv.Atoi(follow.Latest[0])
