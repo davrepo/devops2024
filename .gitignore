@@ -24,3 +24,6 @@ db/
 # environment variables
 .env
 
+
+# pycache
+__pycache__/
