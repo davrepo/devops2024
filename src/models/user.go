@@ -14,7 +14,7 @@ type Message struct {
 	MessageID uint      `json:"messageID" gorm:"primaryKey"`
 	Author    string    `json:"authorID" gorm:"foreignKey:Username;"`
 	Text      string    `json:"text"`
-	CreatedAt time.Time `json:"createdAt"`
+  CreatedAt time.Time `json:"createdAt"`
 	Flagged   bool      `json:"flagged"`
 }
 

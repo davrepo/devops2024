@@ -51,7 +51,7 @@ def logout(http_session):
 def add_message(http_session, text):
     """Records a message"""
     r = http_session.post(f'{BASE_URL}/add_message', data={'message': text},
-                                    allow_redirects=True)
+                                allow_redirects=True)
     if text:
         assert 'Your message was recorded' in r.text
     return r

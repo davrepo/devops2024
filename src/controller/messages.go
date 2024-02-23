@@ -40,7 +40,6 @@ func GetMessages(user string, page string, c *gin.Context) []map[string]interfac
 	return results
 }
 
-
 func LimitMessages(page string) (int, int) {
 	messagesPerPage := 50
 	p, err := strconv.Atoi(page)

@@ -1,9 +1,10 @@
 package controllers
 
 import (
-	"minitwit.com/devops/src/flash"
 	"net/http"
 	"strings"
+
+	"minitwit.com/devops/src/flash"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,7 +15,7 @@ import (
 
 func GetUser(username string) model.User {
 	var user model.User
-	database.DB.Where("username = ?", username).First(&user) // SELECT * FROM USERS WHERE USERNAME = "?"
+	database.DB.Where("username = ?", username).First(&user)
 	return user
 }
 
@@ -71,7 +72,7 @@ func LoginPage(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	flash.SetFlash(c,"message","You were logged out")
+	flash.SetFlash(c, "message", "You were logged out")
 	c.SetCookie("token", "", -1, "", "", false, true)
 	c.Redirect(http.StatusTemporaryRedirect, "/")
 }
