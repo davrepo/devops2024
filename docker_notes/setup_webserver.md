@@ -1,5 +1,6 @@
 # Setup docker container on webserver
 # Attn: Some commands might require '-y' flag if run as a script
+# Also, .env file needs to set DB_HOST to the IP for the dbserver
 
 # install http and curl packages
 sudo apt-get update
