@@ -264,7 +264,7 @@ func Latest(c *gin.Context) {
 }
 
 func main() {
-	if err := godotenv.Load("../.env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalf("Error loading .env file")
 	}
 
@@ -389,7 +389,7 @@ func main() {
 
 	}))
 
-	err := router.Run(":8080")
+  err := router.Run(":5000")
 	if err != nil {
 		panic(err)
 	}
