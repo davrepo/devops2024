@@ -6,10 +6,10 @@ $ip_file = "db_ip.txt"
 Vagrant.configure("2") do |config|
     config.vm.box = 'digital_ocean'
     config.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
-    config.ssh.private_key_path = 'C:\Users\abc\.ssh\id_rsa'
+    config.ssh.private_key_path = '~/.ssh/keys/digitalocean/digoc_id_rsa'
     config.vm.synced_folder ".", "/vagrant", type: "rsync"
+      rsync__exclude = false  # Necessary to include the .env file
 
-    # Web server VM definition
     config.vm.define "dbserver", primary: true do |server|
       server.vm.provider :digital_ocean do |provider|
         provider.ssh_key_name = ENV["SSH_KEY_NAME"]
@@ -22,21 +22,56 @@ Vagrant.configure("2") do |config|
       
       server.vm.hostname = "dbserver"
 
+      server.trigger.after :up do |trigger|
+        trigger.info =  "Writing dbserver's IP to file..."
+        trigger.ruby do |env,machine|
+          remote_ip = machine.instance_variable_get(:@communicator).instance_variable_get(:@connection_ssh_info)[:host]
+          File.write($ip_file, remote_ip)
+        end
+      end
+
       server.vm.provision "shell", inline: <<-SHELL
-        echo "Installing PostgreSQL"
+        # Fix some issue (as stated in exercises), and run apt-get update
+        sudo killall apt apt-get
+        sudo rm /var/lib/dpkg/lock-frontend
         sudo apt-get update
-        sudo apt-get install -y postgresql postgresql-contrib
 
-        # Configure PostgreSQL: Set up user and permissions
-        sudo -u postgres psql -c "CREATE USER root WITH SUPERUSER PASSWORD 'password';"
+        # install http and curl packages
+        sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
 
-        # Create the 'minitwit' database owned by 'root' user
-        sudo -u postgres createdb -O root minitwit
+        # Add Docker's official GPG key:
+        sudo apt-get install ca-certificates curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-        # Restart PostgreSQL to apply changes
-        sudo systemctl restart postgresql
+        # Add the repository to Apt sources:
+        echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
 
-        echo "PostgreSQL installation and setup complete."
+        # Install docker and docker compose
+        sudo apt-get install -y docker.io docker-compose-v2
+
+        sudo systemctl status docker
+        # sudo usermod -aG docker ${USER}
+
+        # Verify that docker works
+        docker run --rm hello-world
+        docker rmi hello-world
+
+        # Change directory to the vagrant directory
+        cd /vagrant
+
+        # Build postgres docker container
+        docker build -t minitwit-postgres -f database/Dockerfile .
+
+        # Run docker container
+        docker run -d --name minitwit-postgres-instance -p 5432:5432 -v $(pwd)/database/init:/docker-entrypoint-initdb.d minitwit-postgres
+
+        echo "Database server is running at: $(hostname -I | awk '{print $1}'):5432"
       SHELL
     end
 
@@ -49,27 +84,82 @@ Vagrant.configure("2") do |config|
         provider.region = 'fra1'
         provider.size = 's-1vcpu-1gb'
         provider.privatenetworking = true
+      end     
+
+      server.vm.hostname = "webserver"
+
+      server.trigger.before :up do |trigger|
+        trigger.info =  "Waiting to create server until dbserver's IP is available."
+        trigger.ruby do |env,machine|
+          ip_file = "db_ip.txt"
+          while !File.file?($ip_file) do
+            sleep(1)
+          end
+          db_ip = File.read($ip_file).strip()
+          puts "Now, I have it..."
+          puts db_ip
+        end
+      end
+
+      server.trigger.after :provision do |trigger|
+        trigger.ruby do |env,machine|
+          File.delete($ip_file) if File.exists? $ip_file
+        end
       end
   
-      server.vm.hostname = "webserver"
-  
       server.vm.provision "shell", inline: <<-SHELL
-        echo "Setting up the Go environment..."
-        wget https://dl.google.com/go/go1.18.linux-amd64.tar.gz
-        sudo tar -C /usr/local -xzf go1.18.linux-amd64.tar.gz
-        echo "export PATH=$PATH:/usr/local/go/bin" >> $HOME/.profile
-        source $HOME/.profile
-        mkdir -p "$HOME/go/src" "$HOME/go/bin"
-        echo "export GOPATH=$HOME/go" >> $HOME/.profile
-        echo "export PATH=$PATH:$GOPATH/bin" >> $HOME/.profile
-        source $HOME/.profile
-        cp -r /vagrant/* $HOME/go/src/minitwit
-        cd $HOME/go/src/minitwit
-        /usr/local/go/bin/go mod download
-        /usr/local/go/bin/go build -o minitwit ./src/main.go
-        nohup ./minitwit > out.log 2>&1 &
-        echo "Go application is running..."
-        echo "Navigate in your browser to the server's IP"
-        SHELL
+        # Fix some issue (as stated in exercises), and run apt-get update
+        sudo killall apt apt-get
+        sudo rm /var/lib/dpkg/lock-frontend
+        sudo apt-get update
+
+        # Get the IP of the database server, and add it to the .env file
+        export DB_IP=`cat /vagrant/db_ip.txt`
+        echo "\nDB_HOST=$DB_IP" >> /vagrant/.env
+
+        # install http and curl packages
+        sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+
+        # Add Docker's official GPG key:
+        sudo apt-get install ca-certificates curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+        # Add the repository to Apt sources:
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+          $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        sudo apt-get update
+
+        # Install docker and docker compose
+        sudo apt-get install -y docker.io docker-compose-v2
+
+        sudo systemctl status docker
+        # sudo usermod -aG docker ${USER}
+
+        # Verify that docker works
+        docker run --rm hello-world
+        docker rmi hello-world
+
+        # Change directory to the vagrant directory
+        cd /vagrant
+
+        # Build web app docker image
+        docker build -t minitwit-app .
+
+        # Build API docker image
+        docker build -t minitwit-api -f api/Dockerfile .
+
+        # Run web app docker container
+        docker run -d --name minitwit-app-instance -p 8080:8080 minitwit-app
+
+        # Run API docker container
+        docker run -d --name minitwit-api-instance -p 5000:5000 minitwit-api
+
+        echo "Webserver is running at: http://$(hostname -I | awk '{print $1}'):8080"
+        echo "API is running at: http://$(hostname -I | awk '{print $1}'):5000"
+      SHELL
     end
 end
