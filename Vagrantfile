@@ -34,6 +34,7 @@ Vagrant.configure("2") do |config|
         # Fix some issue (as stated in exercises), and run apt-get update
         sudo killall apt apt-get
         sudo rm /var/lib/dpkg/lock-frontend
+
         sudo apt-get update
 
         # install http and curl packages
@@ -68,8 +69,11 @@ Vagrant.configure("2") do |config|
         # Build postgres docker container
         docker build -t minitwit-postgres -f database/Dockerfile .
 
+        # Create the docker volume to persist data
+        docker volume create database-volume
+
         # Run docker container
-        docker run -d --name minitwit-postgres-instance -p 5432:5432 -v $(pwd)/database/init:/docker-entrypoint-initdb.d minitwit-postgres
+        docker run -d --name minitwit-postgres-instance -p 5432:5432 -v $(pwd)/database/init:/docker-entrypoint-initdb.d -v database-volume:/var/lib/postgresql/data minitwit-postgres
 
         echo "Database server is running at: $(hostname -I | awk '{print $1}'):5432"
       SHELL
@@ -111,6 +115,7 @@ Vagrant.configure("2") do |config|
         # Fix some issue (as stated in exercises), and run apt-get update
         sudo killall apt apt-get
         sudo rm /var/lib/dpkg/lock-frontend
+        
         sudo apt-get update
 
         # Get the IP of the database server, and add it to the .env file
