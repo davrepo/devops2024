@@ -45,8 +45,6 @@ jobs:
 
       - name: Test minitwit
         run: |
-          make dropdb
-          make createdb
           docker build -t $DOCKER_USERNAME:latest -f ../api/Dockerfile-tests .
           docker run  $DOCKER_USERNAME:latest
         env:
