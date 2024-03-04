@@ -24,6 +24,8 @@ db/
 # environment variables
 .env
 
+# docker logs in analytics
+analytics/docker-logs/
 
 # pycache
 __pycache__/
