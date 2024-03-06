@@ -28,7 +28,7 @@ func main() {
     log.Fatal("Error connecting to database.", err)
   }
 
-  fmt.Println("Successful connection do database.")
+  fmt.Println("Successful connection to database.")
   var numberOfUsers int 
   var averageFollowers float64
   query1 := `select count(*) from users;`
