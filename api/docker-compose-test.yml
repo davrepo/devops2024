@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile-tests
+    depends_on:
+     - app
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+      - .env-test
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: minitwit-tests
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

@@ -13,6 +13,7 @@ RUN go mod download
 # Copy source from current to Working Directory
 COPY . .
 COPY .env /app/
+COPY .env-test /app/
 
 
 # Build Go app
@@ -26,9 +27,10 @@ WORKDIR /root/
 # Copy pre-built binary file
 COPY --from=builder /app/api .
 COPY --from=builder /app/.env .
+COPY --from=builder /app/.env-test .
 
 # Expose port 8080
 EXPOSE 8080
-
+ENV OPTION_VALUE=false
 # Run the excutable
-CMD ["./api"]
+CMD ["./api","-test","$OPTION_VALUE"]
